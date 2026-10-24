@@ -1,0 +1,72 @@
+output_dir: './outputs/fsfdmd'
+name: fsfdmd-distill
+
+data:
+  data_path: './buffers/data/vavae_f16d32/train_256'
+  fid_reference_file: './buffers/refs/in1k256_fid_ref.npz'
+  image_size: 256
+  num_classes: 1000
+  num_workers: 8
+  latent_norm: True
+  latent_multiplier: 1.0
+
+vae:
+  type: 'vavae_f16d32'
+  downsample_ratio: 16
+
+model:
+  type: FSF-DMD-DiT-B/1
+  in_channels: 32
+
+train:
+  ckpt: "outputs/2025.12.11KST17.30.28-flowmap/checkpoints/0400000.pt"
+  teacher: "outputs/2025.12.11KST17.30.28-flowmap/checkpoints/0400000.pt"
+  reinit_train_steps: True
+  load_opt: False
+  max_steps: 6000
+  global_batch_size: 128
+  gradient_accumulation_steps: 1
+  global_seed: 0
+  log_every: 100
+  ckpt_every: 1000
+  ckpt_legacy: 20000
+  ema_decay: 0.99995
+
+optimizer:
+  type: 'AdamW'
+  lr: 0.0001
+  weight_decay: 0.0
+  beta1: 0.9
+  beta2: 0.95
+  max_grad_norm: 0.1
+
+muon:
+  type: NorMuon
+  lr: 0.0005
+  momentum: 0.95
+  beta2: 0.95
+  weight_decay: 0.0
+  use_polar_express: False
+
+method:
+  type: fsfdmd
+  label_drop: 0.1
+  precfg: 6.0
+  cfgrange: [0.0, 0.9]
+  cd_mask_s: 0.5
+  cd_use_cond: True
+  unroll_step: 1
+  unroll_fullprop: False
+  unroll_memtune: True
+  dmd_indep_z: True
+  dmd_huber: null
+  dmd_weight: 0.1
+  dmd_ada_weight: True
+  dmd_cos_weight: False
+  gamma: 10
+
+sample:
+  sampling_steps: 2
+  per_batch_size: 128
+  fid_sample_num: 10000
+  demos: [975, 3, 207, 387, 388, 88, 979, 279]

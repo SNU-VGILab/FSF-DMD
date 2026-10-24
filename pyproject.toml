@@ -1,0 +1,44 @@
+[project]
+name = "fsf-dmd"
+version = "0.1.0"
+requires-python = "==3.12.*"
+dependencies = [
+    "torch==2.13.0",  # cu130 build for Blackwell (sm_120) support
+    "torchvision==0.28.0",
+    "numpy==1.26.4",
+    "accelerate==1.14.0",
+    "wandb==0.28.1",
+    "tqdm",
+    "pyyaml",
+    "torch-fidelity",
+    "diffusers==0.39.0",
+    "einops==0.8.2",
+    "pillow==12.3.0",
+    "safetensors==0.8.0",
+    "triton",  # version pinned by torch
+]
+
+[dependency-groups]
+# scripts/convert_imf.py only
+convert = ["orbax-checkpoint"]
+lint = ["ruff"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+
+[tool.uv]
+package = false
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu130" }
+torchvision = { index = "pytorch-cu130" }
+torch-fidelity = { git = "https://github.com/LTH14/torch-fidelity.git", rev = "5746b7685c505fe3cb8ef0895c93b0d5f21f8b7d" }

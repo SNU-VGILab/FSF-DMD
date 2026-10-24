@@ -1,0 +1,59 @@
+output_dir: './outputs/fsfdmd'
+name: fsfdmd-imf-official
+
+data:
+  data_path: './buffers/data/sdvae_f8c4/train_256'
+  fid_reference_file: './buffers/refs/in1k256_fid_ref.npz'
+  image_size: 256
+  num_classes: 1000
+  num_workers: 8
+  latent_norm: False
+  latent_multiplier: 1.0
+
+vae:
+  type: 'sdvae_f8c4'
+  downsample_ratio: 8
+
+model:
+  type: iMF-DiT-B/2
+  in_channels: 4
+
+train:
+  ckpt: "outputs/iMF-B-2/checkpoints/iMF-B-2-full-converted.pt"
+  reinit_train_steps: True
+  load_opt: True
+  max_steps: 3000
+  global_batch_size: 128
+  gradient_accumulation_steps: 1
+  global_seed: 0
+  log_every: 100
+  ckpt_every: 200
+  ckpt_legacy: 20000
+  ema_decay: 0.9999
+
+optimizer:
+  type: 'AdamW'
+  lr: 0.0001
+  weight_decay: 0.0
+  beta1: 0.9
+  beta2: 0.95
+
+method:
+  type: fsfdmd-imf-official
+  label_drop: 0.1
+  precfg: 7.5
+  cfgrange: [0.4, 0.65]
+  unroll_step: 1
+  unroll_fullprop: False
+  dmd_indep_z: False
+  dmd_huber: null
+  dmd_weight: 0.01
+  dmd_ada_weight: False
+  dmd_cos_weight: False
+  gamma: 10
+
+sample:
+  sampling_steps: 1
+  per_batch_size: 256
+  fid_sample_num: 10000
+  demos: [975, 3, 207, 387, 388, 88, 979, 279]
