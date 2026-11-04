@@ -3,6 +3,12 @@
   <a href="https://arxiv.org/abs/2605.19256">
     <img alt="arXiv" src="https://img.shields.io/badge/arXiv-2605.19256-b31b1b" />
   </a>
+  <a href="https://snu-vgilab.github.io/FSF-DMD/">
+    <img alt="Project Page" src="https://img.shields.io/badge/Project%20Page-FSF--DMD-00B894" />
+  </a>
+  <a href="https://huggingface.co/YoungJoong/FSF-DMD">
+    <img alt="Hugging Face" src="https://img.shields.io/badge/Weights-Hugging%20Face-FFD21E" />
+  </a>
   <a href="#citation">
     <img alt="BibTeX" src="https://img.shields.io/badge/Citation-BibTeX-8250df" />
   </a>
@@ -109,13 +115,10 @@ This repository is mainly based on [LINs-lab/UCGM](https://github.com/LINs-lab/U
 ## Citation
 
 ```bibtex
-@misc{kim2026distributionmatchingdistillationfake,
-      title={Distribution Matching Distillation without Fake Score Network},
-      author={Youngjoong Kim and Deokyeong Lee and Jaesik Park},
-      year={2026},
-      eprint={2605.19256},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV},
-      url={https://arxiv.org/abs/2605.19256},
+@inproceedings{kim2026distribution,
+  title={Distribution Matching Distillation without Fake Score Network},
+  author={Youngjoong Kim and Deokyeong Lee and Jaesik Park},
+  booktitle={The Fortieth Annual Conference on Neural Information Processing Systems},
+  year={2026},
 }
 ```
