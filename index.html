@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Distribution Matching Distillation without Fake Score Network.">
+  <meta name="keywords" content="distribution matching distillation, DMD, flow map, few-step generation, FSF-DMD">
+  <title>Distribution Matching Distillation without Fake Score Network</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Castoro&family=Noto+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/academicons/1.9.4/css/academicons.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+  <link rel="stylesheet" href="static/css/index.css">
+
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+  <script defer src="static/js/index.js"></script>
+</head>
+<body>
+
+<!-- ================================================================ HERO -->
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop has-text-centered">
+      <p class="venue">Conference on Neural Information Processing Systems (NeurIPS), 2026</p>
+      <h1 class="title is-1 publication-title">Distribution Matching Distillation<br>without Fake Score Network</h1>
+      <div class="publication-authors">
+        <span class="author-block">Youngjoong Kim<sup>1</sup>,</span>
+        <span class="author-block">Deokyeong Lee<sup>2</sup>,</span>
+        <span class="author-block"><a href="mailto:jaesik.park@snu.ac.kr">Jaesik Park</a><sup>1†</sup></span>
+      </div>
+      <div class="publication-affil"><span><sup>1</sup>Seoul National University</span><span><sup>2</sup>Sogang University</span></div>
+      <div class="publication-note"><sup>†</sup>Corresponding author</div>
+
+      <div class="publication-links">
+        <a class="link-pill" href="https://arxiv.org/abs/2605.19256" target="_blank" rel="noopener">
+          <i class="ai ai-arxiv" aria-hidden="true"></i><span>arXiv</span>
+        </a>
+        <a class="link-pill" href="https://github.com/SNU-VGILab/FSF-DMD" target="_blank" rel="noopener">
+          <i class="fab fa-github" aria-hidden="true"></i><span>Code</span>
+        </a>
+        <a class="link-pill" href="https://huggingface.co/YoungJoong/FSF-DMD" target="_blank" rel="noopener">
+          <span class="hf-icon" aria-hidden="true">🤗</span><span>Hugging Face</span>
+        </a>
+        <a class="link-pill" href="#bibtex">
+          <i class="fas fa-quote-right" aria-hidden="true"></i><span>BibTeX</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ TEASER (Fig. 1) -->
+<section class="teaser">
+  <div class="container is-max-desktop">
+    <figure class="fig1-wrap" id="fig1">
+      <img class="fig1-img" src="static/img/fig1.svg" alt="Comparison between DMD2 and FSF-DMD">
+      <figcaption class="caption">
+        <span class="cap-num">Figure 1.</span> <strong>Comparison between DMD2 and FSF-DMD.</strong> <strong>(Left)</strong> DMD2 computes the discrepancy between the teacher and fake scores of the generated samples. It requires an additional network to estimate the fake score, introducing overhead through a separate training loop. <strong>(Right)</strong> For flow-map generators, FSF-DMD replaces the fake-side estimator with the generator-induced surrogate in Eq. 9, avoiding the additional fake-velocity network and secondary training loop.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<nav class="toc" aria-label="Sections">
+  <div class="container is-max-desktop">
+    <a href="#abstract">Abstract</a>
+    <a href="#method">Method</a>
+    <a href="#experiments">Experiments</a>
+    <a href="#bibtex">BibTeX</a>
+  </div>
+</nav>
+
+<!-- ================================================================ ABSTRACT -->
+<section class="section" id="abstract">
+  <div class="container is-max-desktop">
+    <h2 class="sec-title">Abstract</h2>
+    <div class="prose abstract">
+      <p>Distribution Matching Distillation (DMD) provides an effective distribution-level correction for few-step generation, while relying on an auxiliary fake-score network to track the evolving generative distribution. Recent work combines DMD with a flow-map objective to exploit the benefits of both methods: mode-seeking and mode-covering behaviors. Since this fake-score network increases memory and update overhead, we study whether this explicit tracker can be avoided when the generator has a flow-map structure. In this work, we propose <em>Fake-Score-network-Free DMD (FSF-DMD)</em>, a DMD-style correction for flow-map generators, replacing the auxiliary fake-score estimator with a generator-induced surrogate. We observe that this surrogate can be derived from the definition of the fake velocity under a certain perturbation assumption. Building on this insight, we derive a DMD-style objective without a fake-side network, extend it to backward simulation for flow maps, and to a self-teacher variant for training from scratch. In our ImageNet-1K \(256\!\times\!256\) experiments, FSF-DMD is competitive with the studied DMD baselines when initialized from pretrained networks and when trained from scratch.</p>
+    </div>
+
+    <figure class="preview reveal">
+      <div class="sample-strip"><img src="static/img/E_strip.jpg" alt="2-step FSF-DMD samples on ImageNet-1K 256x256"></div>
+      <p class="caption"><span class="cap-num">Figure 4.</span> <strong>2-step FSF-DMD samples</strong> on ImageNet-1K \(256\!\times\!256\), flow-map-initialized.</p>
+    </figure>
+  </div>
+</section>
+
+<!-- ================================================================ §3 METHOD -->
+<section class="section alt" id="method">
+  <div class="container is-max-desktop">
+    <h2 class="sec-title">Method</h2>
+
+    <figure class="fig2" id="fig2">
+      <div class="fig2-row">
+        <div><img src="static/img/fig2_cd.svg" alt="Consistency distillation"><span class="sub-caption">(a) Consistency distillation</span></div>
+        <div><img src="static/img/fig2_dmd.svg" alt="DMD"><span class="sub-caption">(b) DMD</span></div>
+        <div class="ours"><img src="static/img/fig2_fsfdmd.svg" alt="FSF-DMD (Ours)"><span class="sub-caption"><strong>(c) FSF-DMD (Ours)</strong></span></div>
+      </div>
+      <button class="ctl-btn fig2-replay" type="button" aria-label="Replay Figure 2"><i class="fas fa-rotate-right" aria-hidden="true"></i><span>Replay</span></button>
+      <figcaption class="caption"><span class="cap-num">Figure 2.</span> <strong>From explicit fake-score tracking to Fake-Score-network-Free DMD (FSF-DMD).</strong> Red lines indicate the discrepancy measured by each objective. Consistency distillation \(\mathcal L_\mathrm{CD}\) in Eq. 13 anchors the generator to the flow-map structure, but does not include a fake-side correction (Fig. 2a). DMD applies a teacher-fake distributional correction \(\mathcal L_\mathrm{DMD}\) in Eq. 5, but usually estimates the fake velocity with an auxiliary network \(v_\psi\) (Fig. 2b). Our \(\mathcal L_\mathrm{FSF\text{-}DMD}\) in Eq. 11 replaces \(v_\psi\) with the pseudo-velocity \(u_\theta(\hat x_t; t, 0)\) obtained from the flow-map generator \(X_\theta\). We jointly optimize this objective with \(\mathcal L_\mathrm{CD}\) to preserve the flow-map structure.</figcaption>
+    </figure>
+
+    <div class="sec-tabs" data-tabs>
+      <div class="tab-list sec-tab-list" role="tablist" aria-label="Section 3">
+        <button role="tab"><span class="num">3.1</span>Preliminary</button>
+        <button role="tab" aria-selected="true"><span class="num">3.2</span>Our Approach</button>
+        <button role="tab"><span class="num">3.3</span>Backward Simulation</button>
+        <button role="tab"><span class="num">3.4</span>Training from Scratch</button>
+      </div>
+
+      <!-- ---------------------------------------------------------- 3.1 -->
+      <div class="tab-pane" role="tabpanel" hidden>
+      <h3 class="sub-title"><span class="num">3.1</span> Preliminary</h3>
+
+      <details class="apx">
+        <summary class="apx-head"><span class="apx-tag">Table 2</span><span class="apx-title">Notation</span></summary>
+        <div class="apx-body">
+          <div class="table-wrap">
+            <table class="paper-table compact">
+              <thead><tr><th>Symbol</th><th>Description</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>\(v^*_t\), \(X\)</td><td>Marginal velocity and flow map of the probability-flow ODE.</td><td>Ideal</td></tr>
+                <tr><td>\(v_\mathrm{fake}\), \(v^\mathrm{ODE}_\mathrm{fake}\)</td><td>Ideal fake velocities under independent and PF-ODE perturbations.</td><td>Ideal</td></tr>
+                <tr><td>\(s_\Phi\), \(v_\Phi\)</td><td>Teacher-score and teacher-velocity networks (subscripted by \(\Phi\)).</td><td>Frozen</td></tr>
+                <tr><td>\(s_\psi\), \(v_\psi\)</td><td>Fake-score and fake-velocity networks (subscripted by \(\psi\)).</td><td>Training</td></tr>
+                <tr><td>\(X_\theta\), \(u_\theta\)</td><td>Flow-map generator and pseudo-velocity network: \(G_\theta(z) = X_\theta(z; 1, 0)\).</td><td>Training</td></tr>
+                <tr><td>\(\bar u_\theta\)</td><td>Pseudo-velocity accumulated during backward simulation.</td><td>Output</td></tr>
+              </tbody>
+            </table>
+            <p class="caption"><span class="cap-num">Table 2.</span> <strong>Notation.</strong> Greek subscripts denote network parameters and other symbols denote ideal targets. A hat denotes a generated sample, and the subscript \(t\) denotes its noise level.</p>
+          </div>
+        </div>
+      </details>
+
+      <div class="prose">
+        <p><strong>Flow Matching</strong> models learn a velocity field from an interpolant that transports particles between a prior distribution and the target data distribution. Let \(p_\mathrm{real}\) denote a data distribution. For a tractable prior distribution \(p_Z\), previous work defines the linear interpolation \(x_t = (1-t)x + tz\), where \(x\sim p_\mathrm{real}\), \(z\sim p_Z\), and \(t\in [0, 1]\).</p>
+        <p>The conditional velocity along this path is \(v_t(x_t|x) = (x_t - x) / t\), and the marginal velocity is given by \(v^*_t(x_t) = \mathbb E_{x|x_t}[v_t(x_t|x)]\). Generation follows the probability-flow ODE (PF-ODE) induced by \(v^*_t\), namely \(dx_t = v^*_t(x_t)\,dt\). A good approximation requires multiple sampling steps, which motivates a direct few-step generator.</p>
+        <p><strong>Flow Maps.</strong> To construct a few-step generator from the underlying flow, a flow map (Boffi et al., 2025; Kim et al., 2024) defines a mapping between two points \(x_t\) and \(x_s\) on the same trajectory:</p>
+        <div class="eq">\[X(x_t; t, s) = x_t + \int^s_tv^*_\tau(x_\tau)d\tau. \tag{2}\]</div>
+        <p>Following MeanFlow-style flow maps, we parameterize the flow-map network \(X_\theta\) with the pseudo-velocity network \(u_\theta\), given by \(X_\theta(x_t; t, s) = x_t + (s-t)u_\theta(x_t; t, s)\), and the corresponding consistency objective is:</p>
+        <div class="eq">\[\mathcal L_\mathrm{CT} = \mathbb E_{x,z,t,s}\left[w_{t,s}\left\| u_\theta(x_t; t, s) - \operatorname{sg}\left[v_t(x_t|x) + (s-t)\frac{d}{dt}u_\theta(x_t; t, s)\right] \right\|^2_2\right] \tag{3}\]</div>
+        <p>where \(\operatorname{sg}[\cdot]\) is a stop-gradient operator and \(w_{t,s}\) is a scalar weight. In particular, \(u_\theta(x_t; t, s)\) represents the average velocity needed to move \(x_t\) to time \(s\), and \(u_\theta(x_t;t,t)\) recovers the instantaneous velocity \(v^*_t(x_t)\) in the \(s\to t\) limit.</p>
+        <p><strong>Distribution Matching Distillation (DMD)</strong> (Yin et al., 2024b) matches the real and generative distributions through the difference between their perturbed scores to train a few-step generator \(G_\theta\). Let \(p_{\mathrm{fake}} = (G_\theta)_\# p_Z\) be the push-forward generative distribution. DMD minimizes the Kullback-Leibler (KL) divergence between the noised distributions:</p>
+        <div class="eq">\[\nabla_\theta\mathcal L_\mathrm{DMD} = \mathbb E_{z,z',t}\left[(\nabla_x\log p_\mathrm{fake}(\hat x_t; t) - \nabla_x\log p_\mathrm{real}(\hat x_t; t))\frac{d\hat x_t}{d\theta}\right], \tag{4}\]</div>
+        <p>for \(\hat x_t = (1-t)G_\theta(z) + tz'\) and \(z'\sim p_Z\). In this case, we assume the teacher-score network \(s_\Phi(x_t; t)\approx\nabla_x\log p_\mathrm{real}(x_t; t)\). As the fake score changes with \(G_\theta\), standard DMD introduces an auxiliary network \(s_\psi\) to estimate the score of the current generative distribution:</p>
+        <div class="eq">\[\nabla_\theta\mathcal L_\mathrm{DMD} = \mathbb E\left[(s_\psi(\hat x_t; t) - s_\Phi(\hat x_t; t))\frac{d\hat x_t}{d\theta} \right] = \mathbb E\left[\gamma_t\left(v_\Phi(\hat x_t; t)-v_\psi(\hat x_t; t)\right)\frac{d\hat x_t}{d\theta}\right], \tag{5}\]</div>
+        <p>for \(\gamma_t = (1-t)t^{-1}\). The key point is that the fake score is not fixed: it changes as \(G_\theta\) updates. Therefore, <em>DMD uses a separate fake-score tracker, represented here by \(s_\psi\) or \(v_\psi\), which introduces additional computational overhead</em>.</p>
+      </div>
+
+      <details class="apx">
+        <summary class="apx-head"><span class="apx-tag">Table 1</span><span class="apx-title">Design choices of DMD-style objectives combined with flow-map generators</span></summary>
+        <div class="apx-body">
+          <div class="table-wrap">
+            <table class="paper-table compact">
+              <thead><tr><th>Method</th><th>Base flow map</th><th class="ctr">GAN</th><th>Fake-side estimator</th><th>Rollout</th></tr></thead>
+              <tbody>
+                <tr><td>DMD2 (Yin et al., 2024a)</td><td>-</td><td class="ctr">○</td><td>Auxiliary network</td><td>Backward simulation</td></tr>
+                <tr><td>rCM (Zheng et al., 2026)</td><td>sCM (Lu and Song, 2025)</td><td class="ctr">×</td><td>Auxiliary network</td><td>rCM rollout</td></tr>
+                <tr><td>SenseFlow (Ge et al., 2026)</td><td>ISG (Ge et al., 2026)</td><td class="ctr">○</td><td>Auxiliary network</td><td>Backward simulation</td></tr>
+                <tr><td>TwinFlow (Cheng et al., 2026)</td><td>RCGM (Sun and Lin, 2026)</td><td class="ctr">×</td><td>Twin velocity</td><td>One-step generation</td></tr>
+                <tr class="ours rule"><td><strong>FSF-DMD (Ours)</strong></td><td>iMF (Geng et al., 2026a)</td><td class="ctr">×</td><td>Surrogate velocity (Eq. 9)</td><td>Euler rollout (Eq. 16)</td></tr>
+              </tbody>
+            </table>
+            <p class="caption"><span class="cap-num">Table 1.</span> <strong>Design choices of DMD-style objectives combined with flow-map generators.</strong> <em>Base flow map</em> denotes the flow-map objective jointly trained with DMD, <em>GAN</em> denotes whether a GAN loss is adopted, <em>Fake-side estimator</em> denotes the fake-score or fake-velocity estimator, and <em>Rollout</em> denotes the few-step generation strategy used during training. FSF-DMD uses the generator-induced surrogate velocity and extends backward simulation to flow-map models based on the Euler method.</p>
+          </div>
+        </div>
+      </details>
+      </div>
+
+      <!-- ---------------------------------------------------------- 3.2 -->
+      <div class="tab-pane" role="tabpanel">
+      <h3 class="sub-title"><span class="num">3.2</span> Our Approach</h3>
+      <div class="prose">
+        <p>Our goal is estimating the fake velocity without introducing an additional network.</p>
+        <p><strong>Motivating Observation.</strong> This becomes tractable when the generator has the flow-map structure in Eq. 2. Starting from the flow-map setting, the auxiliary fake velocity \(v_\psi\) would be trained by</p>
+        <div class="eq">\[\mathcal L_\psi = \mathbb E_{z,z',t}\left[\left\|v_\psi(\hat x_t; t) - (z' - \hat x)\right\|^2_2\right],\quad v_\psi(\hat x_t; t)\approx \mathbb E_{z,z'|\hat x_t}[z' - z + u_\theta(z; 1, 0)], \tag{6}\]</div>
+        <p>where \(\hat x = G_\theta(z) = X_\theta(z; 1, 0)\). If the perturbation reuses the generator input, \(z'=z\), the fake velocity becomes <em>a conditional expectation over the pseudo-velocity, \(\mathbb E_{z|\hat x_t}[u_\theta(z; 1, 0)]\)</em>. However, the conditional expectation is still not directly accessible since \(p(z|\hat x_t)\) is nontrivial in general.</p>
+        <p><strong>Deriving the Surrogate.</strong> A further simplification appears under a PF-ODE-based noising process, which defines an inverse map \(\hat x_t = X(\hat x; 0,t)\). By injectivity and invertibility of the flow map, the posterior collapses to a point mass \(p(\hat x|\hat x_t) = \delta(X(\hat x; 0, t) - \hat x_t)\), yielding the corresponding fake velocity \(v_\mathrm{fake}^\mathrm{ODE}\) (see App. A.3):</p>
+        <div class="eq">\[\begin{aligned} v_\mathrm{fake}^\mathrm{ODE}(\hat x_t; t) &amp;= \mathbb E_{\hat x|\hat x_t}[t^{-1}(\hat x_t - \hat x)] = t^{-1}(\hat x_t - X(\hat x_t; t,0)) &amp;&amp; \because \text{PF-ODE coupling} \\ &amp;\approx t^{-1}(\hat x_t - X_\theta(\hat x_t; t, 0)) &amp;&amp; \because \text{network approximation} \\ &amp;= u_\theta(\hat x_t; t, 0) &amp;&amp; \because \text{definition of } u_\theta \end{aligned} \tag{7–9}\]</div>
+        <p>Therefore, under the PF-ODE coupling, the pseudo-velocity \(u_\theta(\hat x_t; t,0)\) approximates the fake velocity \(v_\mathrm{fake}^\mathrm{ODE}(\hat x_t; t)\) without introducing a separate network or training loop.</p>
+        <p><em>We use it as a tractable surrogate for the fake velocity, replacing the explicit fake-velocity estimator</em>:</p>
+        <div class="eq eq-key">\[\Delta_{u, \Phi}(\hat x_t,t) = u_\theta(\hat x_t; t,0) - v_\Phi(\hat x_t; t),\quad \nabla_\theta\mathcal L(u, \Phi) = \mathbb E_{z,z',t}\left[-\gamma_t\Delta_{u, \Phi}(\hat x_t, t)\frac{d\hat x_t}{d\theta}\right]. \tag{10}\]</div>
+      </div>
+
+      <details class="apx">
+        <summary class="apx-head"><span class="apx-title">Field Inconsistency</span></summary>
+        <div class="apx-body">
+          <div class="prose">
+              <p>We note that the fake velocity in Eq. 6 is determined by the noising process used to construct \(\hat x_t\). DMD uses the independent perturbation for both teacher and fake velocities: \(\hat x_t = (1-t)\hat x + tz'\) for \(\hat x \perp z'\). The corresponding flow fields are therefore consistently defined. However, assuming PF-ODE noising while retaining \(\hat x_t\) can induce inconsistency between the two fields, \(v_\mathrm{fake}\ne v^\mathrm{ODE}_\mathrm{fake}\), as observed in Table 13. <em>Eq. 9 is therefore a heuristic surrogate rather than a pointwise estimate of the usual fake velocity, but remains effective in the studied settings</em> (Sec. 4).</p>
+              <p>As one possible intuitive explanation, this could steer the per-point generative direction \(u_\theta(\hat x_t; t, 0)\) toward the teacher velocity \(v_\Phi\). This complements flow-map training without requiring the surrogate to be the exact fake velocity. We did not observe unusual optimization behavior attributable to this change in our settings (Fig. 3).</p>
+          </div>
+          <div class="prose">
+            <p><strong>(Appendix B.2)</strong> Since the perturbation process is altered, the teacher- and fake-velocity fields can be inconsistent. To quantify this effect, we measure the cosine similarity and MSE between our surrogate and the conventionally trained fake velocity in Table 13. MSE (%) denotes the MSE normalized by the squared norm of the explicitly trained fake-velocity estimate, expressed as a percentage.</p>
+          </div>
+          <div class="table-wrap narrow wide">
+            <table class="paper-table compact">
+              <thead><tr><th>Training steps</th><th class="num">Cosine sim.</th><th class="num">MSE</th><th class="num">MSE (%)</th><th class="num">FID</th></tr></thead>
+              <tbody>
+                <tr><td>0K - 0.2K</td><td class="num">0.93</td><td class="num">0.38</td><td class="num">14%</td><td class="num">5.57</td></tr>
+                <tr><td>0.2K - 1K</td><td class="num">0.51</td><td class="num">12</td><td class="num">79%</td><td class="num">4.49</td></tr>
+                <tr><td>1K - 2K</td><td class="num">0.41</td><td class="num">18</td><td class="num">90%</td><td class="num">4.12</td></tr>
+                <tr><td>2K - 3K</td><td class="num">0.41</td><td class="num">18</td><td class="num">90%</td><td class="num">3.89</td></tr>
+                <tr><td>3K - 4K</td><td class="num">0.42</td><td class="num">18</td><td class="num">88%</td><td class="num">3.85</td></tr>
+              </tbody>
+            </table>
+            <p class="caption"><span class="cap-num">Table 13.</span> Discrepancy between the surrogate and estimated fake velocity over training steps.</p>
+          </div>
+          <div class="prose">
+            <p>Initially, the cosine similarity is higher and the MSE is lower than at later stages, and the surrogate is partly aligned with the usual fake velocity. After 200 steps, the similarity decreases, while FSF-DMD obtains FIDs comparable to those of DMD variants in Table 3.</p>
+          </div>
+        </div>
+      </details>
+
+      <div class="prose">
+        <p><strong>Implementation.</strong> The implemented FSF-DMD objective inserts this surrogate into a stop-gradient objective, given by:</p>
+        <div class="eq eq-key">\[\mathcal L_\mathrm{FSF\text{-}DMD}(u, \Phi) = \mathbb E_{z,z',t}\left[w_t\left\|u_\theta(z; 1, 0) - \operatorname{sg}[u_\theta(z; 1, 0) - \Delta_{u, \Phi}(\hat x_t, t)]\right\|^2_2\right], \tag{11}\]</div>
+        <p>where \(w_t\) is a scalar. Since the surrogate is derived under the flow-map generator, we use consistency distillation (Sabour et al., 2026), \(\mathcal L_\mathrm{CD}\), to align the generator with the flow-map structure. The full objective combines this term with Eq. 11, weighted by a scalar \(\lambda\):</p>
+        <div class="eq">\[\mathcal L_\mathrm{base} = \mathcal L_\mathrm{CD} + \lambda\mathcal L_\mathrm{FSF\text{-}DMD}(u, \Phi), \tag{12}\]</div>
+        <div class="eq">\[\mathcal L_\mathrm{CD} = \mathbb E_{x,z,t,s}\left[w_{t,s}\left\|u_\theta(x_t; t,s) - \operatorname{sg}\left[v_\Phi(x_t; t) + (s-t)\frac{d}{dt}u_\theta(x_t; t, s)\right]\right\|^2_2\right]. \tag{13}\]</div>
+      </div>
+
+      <details class="apx">
+        <summary class="apx-head"><span class="apx-tag">Appendix</span><span class="apx-title">FSF-DMD without \(\mathcal L_\mathrm{CD}\)</span></summary>
+        <div class="apx-body">
+          <div class="table-wrap narrow">
+            <table class="paper-table compact">
+              <thead><tr><th>Training steps</th><th class="num">1K</th><th class="num">2K</th><th class="num">4K</th><th class="num">6K</th></tr></thead>
+              <tbody><tr><td>FID</td><td class="num">4.04</td><td class="num">6.61</td><td class="num">13.84</td><td class="num">24.03</td></tr></tbody>
+            </table>
+            <p class="caption"><span class="cap-num">Table 12.</span> FSF-DMD without consistency distillation \(\mathcal L_\mathrm{CD}\) in the flow-map-initialized setting.</p>
+          </div>
+          <div class="prose">
+            <p>FSF-DMD begins to diverge after 1K training steps when \(\mathcal L_\mathrm{CD}\) is omitted. One possible explanation is that the pseudo-velocity surrogate depends on flow-map properties, including point-mass collapse, injectivity, and invertibility. Without this anchor, the objective pushes \(u_\theta(\hat x_t; t, 0)\) toward \(v_\Phi(\hat x_t; t)\), and one-step generation may collapse toward the data mean due to the posterior-mean property (Karras et al., 2022).</p>
+          </div>
+        </div>
+      </details>
+      </div>
+
+      <!-- ---------------------------------------------------------- 3.3 -->
+      <div class="tab-pane" role="tabpanel" hidden>
+      <h3 class="sub-title"><span class="num">3.3</span> Backward Simulation</h3>
+      <div class="prose">
+        <p>In the few-step generation setting, except for the first step, the generator input is derived from the previously generated sample. This induces a training-inference mismatch when we directly use perturbed data samples during training, and may affect generation performance. To minimize this mismatch, DMD2 introduces <em>backward simulation</em>. However, unlike DMD2, the flow-map generator has a different generation pipeline:</p>
+        <div class="eq">\[\hat x_{i/N} = \hat x_{(i+1)/N} - \frac1N u_\theta\left(\hat x_{(i+1)/N}; \frac{i+1}{N}, \frac{i}{N}\right) = z - \frac1N\sum^N_{k=i+1}u_\theta\left(\hat x_{k/N}; \frac{k}{N}, \frac{k-1}{N}\right), \tag{15}\]</div>
+        <p>for \(\hat x = \hat x_0\), \(\hat x_1 = z\), and \(0\le i &lt; N\). We found that backward simulation has room for improvement in our setting, since it does not fully reflect the flow-map generation process. We therefore make it consistent with the flow-map generator. We use \(N\) for inference-time generation steps and \(M\) for backward-simulation steps. Following Huang et al. (2026), applying stop-gradient to intermediate samples gives:</p>
+        <div class="eq">\[\frac{d\hat x_0}{d\theta} = -\frac{d}{d\theta}\bar u_\theta(z; 1, 0),\quad \bar u_\theta(z; 1, 0) = \frac1M\sum^M_{i=1}u_\theta\left(\operatorname{sg}[\hat x_{i/M}]; \frac{i}M, \frac{i-1}{M}\right). \tag{16}\]</div>
+        <p>Incorporating Eq. 16 into the single-step objective in Eq. 11 gives our final few-step objective:</p>
+        <div class="eq eq-key">\[\mathcal L_\mathrm{distill} = \mathcal L_\mathrm{CD} + \lambda\mathcal L_\mathrm{FSF\text{-}DMD}(\bar u, \Phi) \tag{17}\]</div>
+        <div class="eq">\[\mathcal L_\mathrm{FSF\text{-}DMD}(\bar u, \Phi) = \mathbb E_{z,z',t}\left[w_t\|\bar u_\theta(z; 1, 0) - \operatorname{sg}[\bar u_\theta(z; 1, 0) - \Delta_{u, \Phi}(\hat x_t, t)]\|^2_2\right]. \tag{18}\]</div>
+        <p>This objective preserves the flow-map generation process and coincides with the initial version in Eq. 11 when \(M=1\). We observe that it gives better performance in our setting, as shown in Table 5.</p>
+      </div>
+
+      <details class="apx">
+        <summary class="apx-head"><span class="apx-tag">Appendix</span><span class="apx-title">Algorithm 1: FSF-DMD distillation training</span></summary>
+        <div class="apx-body">
+          <ol class="algo-body">
+            <li class="in"><strong>Input:</strong> Noise distribution \(p_Z\), labeled data distribution \(p_\mathrm{real}\), time distribution \(p_T\), number of backward-simulation steps \(M\), loss weights \(w_{t,s}\) and \(w_t\), DMD coefficient \(\lambda\), learning rate \(\eta\), CFG scale \(\omega\), timestep-shifting parameter \(\kappa\).</li>
+            <li><strong>repeat</strong></li>
+            <li class="i1">\(z \sim p_Z,\quad (x,c) \sim p_\mathrm{real}\)</li>
+            <li class="i1">\(t, s\sim p_T,\quad t, s\gets \max\{t, s\}, \min\{t, s\}\)</li>
+            <li class="i1">\(x_t\gets (1-t)x + tz\)</li>
+            <li class="i1">\(v_t \gets \omega v_\Phi(x_t; t, c) + (1-\omega)v_\Phi(x_t; t, \varnothing)\) <span class="algo-c">▷ Classifier-free guidance</span></li>
+            <li class="i1">\(u_{t,s}, u'_{t,s}\gets \mathrm{JVP}(u_\theta, (x_t, t, s), (v_t, 1, 0))\)</li>
+            <li class="i1">\(\mathcal L_\mathrm{CD}\gets w_{t,s}\|u_{t,s}- \operatorname{sg}[v_t + (s - t)u_{t,s}']\|^2_2\) <span class="algo-c">▷ Consistency distillation in Eq. 13</span></li>
+            <li class="blank"></li>
+            <li class="i1">\(\bar u \gets 0\) <span class="algo-c">▷ Backward simulation in Eq. 16</span></li>
+            <li class="i1"><strong>for</strong> \(i \gets M\) <strong>to</strong> \(1\) <strong>do</strong></li>
+            <li class="i2">\(\hat x_{i/M} \gets z - \bar u\)</li>
+            <li class="i2">\(\bar u\gets \bar u + u_\theta(\operatorname{sg}[\hat x_{i/M}]; i / M, (i - 1) / M) / M\)</li>
+            <li class="i1"><strong>end for</strong></li>
+            <li class="i1">\(\tau\sim \mathcal U[0, 1),\quad t\gets \kappa \tau/((\kappa - 1)\tau + 1)\) <span class="algo-c">▷ Timestep shifting</span></li>
+            <li class="i1">\(z'\sim p_Z\)</li>
+            <li class="i1">\(\hat x \gets z - \bar u,\quad \hat x_t \gets (1-t)\hat x + tz'\)</li>
+            <li class="i1">\(\hat v_t \gets \omega v_\Phi(\hat x_t; t, c) + (1 - \omega)v_\Phi(\hat x_t; t, \varnothing)\) <span class="algo-c">▷ Classifier-free guidance</span></li>
+            <li class="i1">\(\Delta_{u, \Phi}\gets u_\theta(\hat x_t; t, 0) - \hat v_t\)</li>
+            <li class="i1">\(\mathcal L_{\bar u, \Phi}\gets w_t\|\bar u - \operatorname{sg}[\bar u - \Delta_{u, \Phi}]\|^2_2\) <span class="algo-c">▷ DMD surrogate in Eq. 18</span></li>
+            <li class="i1">\(\mathcal L_\mathrm{distill} \gets \mathcal L_\mathrm{CD} + \lambda\mathcal L_{\bar u,\Phi}\) <span class="algo-c">▷ Full objective in Eq. 17</span></li>
+            <li class="blank"></li>
+            <li class="i1">\(\theta\gets \theta-\eta\nabla_\theta \mathcal L_\mathrm{distill}\) <span class="algo-c">▷ Update parameters</span></li>
+            <li><strong>until</strong> convergence</li>
+          </ol>
+        </div>
+      </details>
+      </div>
+
+      <!-- ---------------------------------------------------------- 3.4 -->
+      <div class="tab-pane" role="tabpanel" hidden>
+      <h3 class="sub-title"><span class="num">3.4</span> Training from Scratch</h3>
+      <div class="prose">
+        <p>We can even extend FSF-DMD to the <em>training-from-scratch setting</em> without a teacher network. Since the MeanFlow-style parameterization gives \(u_\theta(x_t; t, t)\approx v^*_t(x_t)\), we can substitute the teacher network \(v_\Phi(x_t; t)\) with the network approximation itself:</p>
+        <div class="eq eq-key">\[\mathcal L_\mathrm{scratch} = \mathcal L_\mathrm{CT} + \lambda\mathcal L_\mathrm{FSF\text{-}DMD}(\bar u), \tag{19}\]</div>
+        <div class="eq">\[\mathcal L_\mathrm{FSF\text{-}DMD}(\bar u) = \mathbb E_{z,z',t}\left[w_t\|\bar u_\theta(z; 1, 0) - \operatorname{sg}[\bar u_\theta(z; 1, 0) - \Delta_u(\hat x_t, t)]\|^2_2\right], \tag{20}\]</div>
+        <div class="eq">\[\Delta_u(\hat x_t, t) = u_\theta(\hat x_t; t, 0) - u_\theta(\hat x_t; t, t). \tag{21}\]</div>
+        <p>For this setting, we replace consistency distillation with consistency training in Eq. 3. This objective provides a DMD-style correction for generated samples even in the training-from-scratch stage. It requires neither a teacher network nor an additional fake-velocity objective in generator training.</p>
+      </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ §4 EXPERIMENTS -->
+<section class="section" id="experiments">
+  <div class="container is-max-desktop">
+    <h2 class="sec-title">Experiments</h2>
+    <div class="sec-tabs" data-tabs>
+      <div class="tab-list sec-tab-list" role="tablist" aria-label="Section 4">
+        <button role="tab" aria-selected="true"><span class="num">4.1</span>Main Comparison</button>
+        <button role="tab"><span class="num">4.2</span>Ablation Study</button>
+        <button role="tab"><span class="num">4.3</span>Flow-Matching Initialization</button>
+        <button role="tab"><span class="num">4.4</span>From-Scratch Training</button>
+      </div>
+
+      <!-- ---------------------------------------------------------- 4.1 -->
+      <div class="tab-pane" role="tabpanel">
+      <h3 class="sub-title"><span class="num">4.1</span> Main Comparison</h3>
+      <div class="table-wrap reveal">
+        <table class="paper-table compact">
+          <thead><tr><th>Method</th><th class="num">FID</th><th class="num">Peak step</th><th class="num">sec/step</th><th class="num">VRAM (GB)</th></tr></thead>
+          <tbody>
+            <tr><td>Consistency distillation (Sabour et al., 2026)</td><td class="num">6.06</td><td class="num">36K</td><td class="num r1"><strong>0.23</strong></td><td class="num r1"><strong>26</strong></td></tr>
+            <tr><td>DMD2 (Yin et al., 2024a)</td><td class="num">4.18</td><td class="num">15K</td><td class="num">1.46</td><td class="num">60</td></tr>
+            <tr><td>DMD2 + IDA-style update (Ge et al., 2026)</td><td class="num">4.20</td><td class="num r3">12K</td><td class="num">1.46</td><td class="num">60</td></tr>
+            <tr><td>DMD2 + \(\mathcal L_\mathrm{CD}\) (Zheng et al., 2026)</td><td class="num">4.67</td><td class="num">54K</td><td class="num">1.63</td><td class="num">76</td></tr>
+            <tr class="rule"><td>DMD2 + \(\mathcal L_\mathrm{CD}\) + Random masking \(s\gets t\)</td><td class="num r1"><strong>3.85</strong></td><td class="num">63K</td><td class="num">1.68</td><td class="num">76</td></tr>
+            <tr class="ours rule"><td><strong>FSF-DMD (Ours, \(M=2\))</strong></td><td class="num r1"><strong>3.85</strong></td><td class="num r2">4K</td><td class="num r3">0.38</td><td class="num r2">49</td></tr>
+            <tr class="ours"><td><strong>FSF-DMD (Ours, \(M=1\))</strong></td><td class="num r3">3.96</td><td class="num r1"><strong>3K</strong></td><td class="num r2">0.31</td><td class="num r2">49</td></tr>
+          </tbody>
+        </table>
+        <p class="caption"><span class="cap-num">Table 3.</span> <strong>Comparison on ImageNet-1K in the flow-map-initialized setting.</strong> <em>Peak step</em> denotes the training step that achieves the reported FID, <em>sec/step</em> denotes the wall-clock time per training step, and <em>VRAM</em> denotes the VRAM requirement. The teacher achieves FID 8.54 with 8 sampling steps.</p>
+      </div>
+      <div class="prose">
+        <p>Table 3 compares FSF-DMD with consistency distillation and DiT-adapted DMD variants in the flow-map-initialized setting. <em>Under this controlled comparison, FSF-DMD obtains an FID equal to or lower than those of the listed variants without an explicit fake-score network or an adversarial branch.</em></p>
+        <p>These results provide proof-of-concept evidence that (i) the implementation-level surrogate is effective in practice, and (ii) FSF-DMD is competitive with explicit-network variants in this setting. Additional metrics in Table 14 show that FSF-DMD also improves IS and recall in the flow-map-initialized setting.</p>
+        <p>Practically, FSF-DMD reduces the VRAM requirement and wall-clock time compared to the DMD2 variants on NVIDIA B200 GPUs, under the same local setup. <em>The gap between DMD2 and FSF-DMD is mainly due to the additional fake-velocity network and TTUR, which FSF-DMD does not require.</em></p>
+      </div>
+
+      <figure class="preview reveal">
+        <div class="sample-strip"><img src="static/img/E_strip.jpg" alt="2-step FSF-DMD samples on ImageNet-1K 256x256, flow-map-initialized" loading="lazy"></div>
+        <figcaption class="caption"><span class="cap-num">Figure 4.</span> <strong>2-step FSF-DMD samples</strong> on ImageNet-1K \(256\!\times\!256\), flow-map-initialized.</figcaption>
+      </figure>
+
+      <details class="apx">
+        <summary class="apx-head"><span class="apx-tag">Appendix</span><span class="apx-title">Additional metrics</span></summary>
+        <div class="apx-body">
+          <div class="table-wrap">
+            <table class="paper-table compact">
+              <thead><tr><th>Method</th><th class="num">sec/step</th><th class="num">Peak step</th><th class="num">FID (↓)</th><th class="num">IS (↑)</th><th class="num">Precision (↑)</th><th class="num">Recall (↑)</th></tr></thead>
+              <tbody>
+                <tr class="group"><td colspan="7">Flow-map-initialized setting</td></tr>
+                <tr><td>Consistency distillation</td><td class="num">0.23</td><td class="num">36K</td><td class="num">6.06</td><td class="num">188.90</td><td class="num">0.65</td><td class="num">0.47</td></tr>
+                <tr><td>DMD2</td><td class="num">1.46</td><td class="num">15K</td><td class="num">4.18</td><td class="num">237.12</td><td class="num">0.60</td><td class="num">0.50</td></tr>
+                <tr><td>DMD2 + IDA-style update</td><td class="num">1.46</td><td class="num">12K</td><td class="num">4.20</td><td class="num">244.09</td><td class="num">0.60</td><td class="num">0.49</td></tr>
+                <tr><td>DMD2 + \(\mathcal L_\mathrm{CD}\)</td><td class="num">1.63</td><td class="num">54K</td><td class="num">4.67</td><td class="num">221.87</td><td class="num">0.61</td><td class="num">0.49</td></tr>
+                <tr class="ours rule"><td><strong>FSF-DMD (Ours, \(M=2\))</strong></td><td class="num">0.38</td><td class="num">4K</td><td class="num">3.85</td><td class="num">262.50</td><td class="num">0.59</td><td class="num">0.53</td></tr>
+                <tr class="ours"><td><strong>FSF-DMD (Ours, \(M=1\))</strong></td><td class="num">0.31</td><td class="num">3K</td><td class="num">3.96</td><td class="num">207.83</td><td class="num">0.62</td><td class="num">0.51</td></tr>
+                <tr class="group"><td colspan="7">Flow-matching-initialized setting</td></tr>
+                <tr><td>Consistency distillation</td><td class="num">0.11</td><td class="num">19K</td><td class="num">5.53</td><td class="num">280.90</td><td class="num">0.48</td><td class="num">0.53</td></tr>
+                <tr><td>DMD2 (TTUR=1:5)</td><td class="num">0.82</td><td class="num">3K</td><td class="num">5.53</td><td class="num">287.33</td><td class="num">0.47</td><td class="num">0.54</td></tr>
+                <tr><td>DMD2 + \(\mathcal L_\mathrm{CD}\) (TTUR=1:5)</td><td class="num">0.90</td><td class="num">33K</td><td class="num">4.90</td><td class="num">262.03</td><td class="num">0.54</td><td class="num">0.53</td></tr>
+                <tr class="ours rule"><td><strong>FSF-DMD (Ours)</strong></td><td class="num">0.17</td><td class="num">8K</td><td class="num">4.70</td><td class="num">246.01</td><td class="num">0.55</td><td class="num">0.54</td></tr>
+              </tbody>
+            </table>
+            <p class="caption"><span class="cap-num">Table 14.</span> <strong>Additional metrics for ImageNet-1K \(256\!\times\!256\) comparisons.</strong> We report FID50K, Inception Score (IS), and precision/recall at the best-FID checkpoint for each listed method.</p>
+          </div>
+        </div>
+      </details>
+
+      <div class="prose">
+        <p><strong>Unconditional Generation.</strong> We evaluate unconditional generation using CelebA-HQ at \(256\!\times\!256\) scale with SD-VAE latents (Rombach et al., 2022) and DiT-B/2, following Frans et al. (2025). In this setting, FSF-DMD shows comparable results to the listed methods, remaining effective for unconditional generation.</p>
+      </div>
+      <div class="split uncond">
+        <div class="table-wrap reveal">
+          <table class="paper-table compact">
+            <thead><tr><th>Method</th><th class="num">\(N\)</th><th class="num">FID</th></tr></thead>
+            <tbody>
+              <tr><td>Flow Matching (Lipman et al., 2023)</td><td class="num">128</td><td class="num">7.3</td></tr>
+              <tr><td>Shortcut Models (Frans et al., 2025)</td><td class="num">128</td><td class="num">6.9</td></tr>
+              <tr><td></td><td class="num">4</td><td class="num">13.8</td></tr>
+              <tr class="rule"><td>MeanFlow (Geng et al., 2026b)</td><td class="num">2</td><td class="num">6.39</td></tr>
+              <tr><td></td><td class="num">1</td><td class="num">8.85</td></tr>
+              <tr class="rule"><td>DMD2 (\(M=2\))</td><td class="num">2</td><td class="num">6.24</td></tr>
+              <tr><td>DMD2 (\(M=1\))</td><td class="num">1</td><td class="num">8.62</td></tr>
+              <tr class="ours"><td><strong>FSF-DMD (Ours, \(M=2\))</strong></td><td class="num">2</td><td class="num"><strong>6.20</strong></td></tr>
+              <tr class="ours"><td><strong>FSF-DMD (Ours, \(M=1\))</strong></td><td class="num">1</td><td class="num">8.04</td></tr>
+            </tbody>
+          </table>
+          <p class="caption"><span class="cap-num">Table 4.</span> <strong>Comparison on CelebA-HQ.</strong></p>
+        </div>
+        <figure class="celeba-fig reveal">
+          <img src="static/img/E_celebahq.jpg" alt="Qualitative results of FSF-DMD trained on CelebA-HQ" loading="lazy">
+          <figcaption class="caption"><span class="cap-num">Figure 5.</span> Qualitative results of FSF-DMD trained on CelebA-HQ.</figcaption>
+        </figure>
+      </div>
+      </div>
+
+      <!-- ---------------------------------------------------------- 4.2 -->
+      <div class="tab-pane" role="tabpanel" hidden>
+      <h3 class="sub-title"><span class="num">4.2</span> Ablation Study</h3>
+      <div class="split">
+        <div class="table-wrap reveal ablation" id="ablation">
+          <table class="paper-table compact">
+            <thead><tr><th>Distillation variant</th><th class="num">FID</th></tr></thead>
+            <tbody>
+              <tr><td>Consistency distillation (Sabour et al., 2026)</td><td class="num">6.06</td></tr>
+              <tr><td>+ FSF-DMD (Ours, Eq. 11)</td><td class="num">5.70</td></tr>
+              <tr><td>+ Backward simulation (DMD2, \(M=2\))</td><td class="num">5.81</td></tr>
+              <tr><td>+ Backward simulation (Ours, Eq. 18)</td><td class="num">5.34</td></tr>
+              <tr><td>+ Hyperparameter tuning</td><td class="num">4.45</td></tr>
+              <tr class="ours"><td>+ Random masking \(s\gets t\)</td><td class="num"><strong>3.85</strong></td></tr>
+              <tr class="ours rule"><td>FSF-DMD + Single-step simulation (\(M=1\))</td><td class="num">3.96</td></tr>
+              <tr><td>DMD2 + Single-step simulation (\(M=1\))</td><td class="num">4.78</td></tr>
+              <tr class="rule"><td>Consistency distillation + Random masking</td><td class="num">4.98</td></tr>
+            </tbody>
+          </table>
+          <p class="caption"><span class="cap-num">Table 5.</span> <strong>Ablation study on ImageNet-1K.</strong></p>
+        </div>
+        <div class="prose">
+          <p>As shown in Table 5, the improvement appears when FSF-DMD is combined with backward simulation (\(M=2\)). Our flow-map version in Eq. 18 gives a better result than the DMD2-style simulation. Since it preserves the generation pipeline of the flow-map model, we attribute this gain to better alignment with the generation process. We also evaluate consistency distillation with the same random masking. It reaches 4.98 FID, <em>leaving a gap that supports the role of the DMD-style correction of FSF-DMD</em>.</p>
+          <p>Compared to the single-step simulation result for DMD2 in Table 5, FSF-DMD with single-step simulation (\(M=1\)) shows a relatively small degradation. This is consistent with the semigroup property of flow maps, \(X(x_t; t, s) = X(X(x_t; t, r); r, s)\), which allows backward simulation to be approximated by single-step generation.</p>
+        </div>
+      </div>
+
+      <details class="apx">
+        <summary class="apx-head"><span class="apx-tag">Appendix</span><span class="apx-title">Hyperparameters</span></summary>
+        <div class="apx-body">
+          <div class="mini-tables">
+            <div class="table-wrap">
+              <table class="paper-table compact">
+                <thead><tr><th>\(\kappa\)</th><th class="num">1.0</th><th class="num">3.0</th><th class="num">5.0</th><th class="num">7.0</th><th class="num">10.0</th></tr></thead>
+                <tbody><tr><td>FID</td><td class="num">4.06</td><td class="num">3.94</td><td class="num">3.89</td><td class="num"><strong>3.87</strong></td><td class="num"><strong>3.87</strong></td></tr></tbody>
+              </table>
+              <p class="caption"><span class="cap-num">Table 9.</span> Results of FSF-DMD (\(M=2\)) across \(\kappa\) when \(\lambda\times w_t=0.05\times 1.0\).</p>
+            </div>
+            <div class="table-wrap">
+              <table class="paper-table compact">
+                <thead><tr><th>\(w_t\)</th><th class="num">0.01</th><th class="num">0.05</th><th class="num">0.1</th><th class="num">0.5</th></tr></thead>
+                <tbody>
+                  <tr><td>1</td><td class="num">3.97</td><td class="num">3.87</td><td class="num">3.98</td><td class="num">3.99</td></tr>
+                  <tr><td>\(1/|\bar u_\theta - v_\Phi|\)</td><td class="num">4.03</td><td class="num"><strong>3.85</strong></td><td class="num"><strong>3.85</strong></td><td class="num">3.94</td></tr>
+                </tbody>
+              </table>
+              <p class="caption"><span class="cap-num">Table 10.</span> FIDs across \(\lambda\) and \(w_t\). Numeric entries in the header row are \(\lambda\) (\(\kappa=10\)).</p>
+            </div>
+          </div>
+          <div class="prose">
+            <p>For \(\kappa\) in the flow-map-initialized setting, the ablation in Table 9 shows that timestep shifting improves distribution matching compared to the unshifted setting (\(\kappa=1\)). We then fix \(\kappa=10\) and study \(\lambda\) with \(w_t\) in Table 10. Adaptive scaling gives better FID for \(\lambda \ge 0.05\). Thus, we use \(\lambda \times w_t = 0.1 / |\bar u_\theta(z; 1, 0) - v_\Phi(\hat x_t; t)|\) in the following experiments. We also evaluate \(\lambda \times w_t=0.5 \times 1.0\) while clipping \(\Delta_{u, \Phi}\) to \([-1, 1]\), following Cheng et al. (2026). This gives an FID of 3.98, so we keep the adaptive scaling.</p>
+          </div>
+        </div>
+      </details>
+      </div>
+
+      <!-- ---------------------------------------------------------- 4.3 -->
+      <div class="tab-pane" role="tabpanel" hidden>
+      <h3 class="sub-title"><span class="num">4.3</span> Flow-Matching Initialization</h3>
+      <div class="split">
+        <div class="table-wrap reveal">
+          <table class="paper-table compact">
+            <thead><tr><th>Method</th><th class="num">FID</th></tr></thead>
+            <tbody>
+              <tr><td>Teacher-velocity network</td><td class="num">12.44</td></tr>
+              <tr><td>+ 3-channel CFG</td><td class="num">3.79</td></tr>
+              <tr class="rule"><td>Consistency distillation</td><td class="num">5.53</td></tr>
+              <tr><td>DMD2 (TTUR=1:5)</td><td class="num">5.53</td></tr>
+              <tr><td>DMD2 + \(\mathcal L_\mathrm{CD}\) (TTUR=1:5)</td><td class="num">4.90</td></tr>
+              <tr class="ours rule"><td><strong>FSF-DMD (Ours)</strong></td><td class="num"><strong>4.70</strong></td></tr>
+            </tbody>
+          </table>
+          <p class="caption"><span class="cap-num">Table 6.</span> <strong>Comparison on ImageNet-1K with flow-matching initialization.</strong> The teacher is evaluated with 250-step Euler sampling.</p>
+        </div>
+        <div class="prose">
+          <p>We then relax the initialization from a pretrained flow-map model to a more common flow-matching model (Yao et al., 2025). The results suggest that <em>FSF-DMD can be trained under the relaxed initialization.</em> It improves over the consistency distillation baseline and the listed comparisons in this evaluation.</p>
+          <p>Compared to Table 3, initialization from a flow-map model gives better FSF-DMD results. This may be due to several factors. First, the generator is already capable of few-step generation, and the correction signal may be more reliable at the early training stage. Second, the improved MeanFlow (iMF) model uses more parameters and computation, and part of the gap may simply reflect scaling.</p>
+        </div>
+      </div>
+      <div class="prose">
+        
+      </div>
+      </div>
+
+      <!-- ---------------------------------------------------------- 4.4 -->
+      <div class="tab-pane" role="tabpanel" hidden>
+      <h3 class="sub-title"><span class="num">4.4</span> From-Scratch Training</h3>
+      <div class="split scratch">
+        <figure class="wipe">
+          <span class="pw"><img class="pw-bg" src="static/img/plot/D_loss_curve_bg.png" alt="" loading="lazy"><img class="pw-fg" src="static/img/plot/D_loss_curve.png" alt="2-step FID10K over training steps" loading="lazy"></span>
+          <figcaption class="caption"><span class="cap-num">Figure 3.</span> <strong>FID10K over training steps</strong> (log-scale).</figcaption>
+        </figure>
+        <div class="table-wrap reveal">
+          <table class="paper-table compact">
+            <thead><tr><th>Method</th><th class="num">FID (↓)</th><th class="num">IS (↑)</th></tr></thead>
+            <tbody>
+              <tr><td>iMF baseline (Geng et al., 2026a)</td><td class="num">9.10</td><td class="num">148.71</td></tr>
+              <tr class="rule"><td>iMF + DMD2 (TTUR=1:5)</td><td class="num">13.38</td><td class="num">138.80</td></tr>
+              <tr><td>iMF + TwinFlow (Cheng et al., 2026)</td><td class="num">12.17</td><td class="num">144.26</td></tr>
+              <tr class="rule"><td>RCGM (Sun and Lin, 2026)</td><td class="num">11.53</td><td class="num">164.55</td></tr>
+              <tr><td>RCGM + TwinFlow</td><td class="num">22.58</td><td class="num">106.04</td></tr>
+              <tr class="ours rule"><td><strong>FSF-DMD (Ours)</strong></td><td class="num"><strong>6.35</strong></td><td class="num"><strong>194.91</strong></td></tr>
+            </tbody>
+          </table>
+          <p class="caption"><span class="cap-num">Table 7.</span> <strong>Training from scratch for 400K steps on ImageNet-1K</strong> (FID50K and IS).</p>
+        </div>
+      </div>
+      <div class="prose">
+        <p>We evaluate FSF-DMD from random initialization with Eq. 19. As shown in Table 7, FSF-DMD is not restricted to distilling pretrained models; it can be directly applied to train flow-map models entirely from scratch. Fig. 3 suggests that, compared to the other methods, training is faster and reaches a better result under the same training budget. One possible explanation is that FSF-DMD does not require the generator to learn a separate fake-velocity branch, allowing it to remain focused on generation.</p>
+      </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ BIBTEX -->
+<section class="section alt" id="bibtex">
+  <div class="container isㅋ-max-desktop">
+    <div class="bib-head">
+      <h2 class="sec-title">BibTeX</h2>
+      <button class="copy-btn" type="button" data-copy="#bibtex-code"><i class="far fa-copy" aria-hidden="true"></i><span>Copy</span></button>
+    </div>
+    <pre><code id="bibtex-code">@inproceedings{kim2026distribution,
+  title={Distribution Matching Distillation without Fake Score Network},
+  author={Youngjoong Kim and Deokyeong Lee and Jaesik Park},
+  booktitle={The Fortieth Annual Conference on Neural Information Processing Systems},
+  year={2026}
+}</code></pre>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container is-max-desktop has-text-centered">
+    <p>This website is adapted from the <a href="https://github.com/nerfies/nerfies.github.io" target="_blank" rel="noopener">Nerfies</a> template, licensed under a <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">Creative Commons Attribution-ShareAlike 4.0 International License</a>.</p>
+  </div>
+</footer>
+
+</body>
+</html>
